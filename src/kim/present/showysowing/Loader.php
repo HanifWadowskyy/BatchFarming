@@ -5,6 +5,7 @@ namespace kim\present\showysowing;
 
 use kim\present\showysowing\entity\TargetingFallingBlock;
 use kim\present\showysowing\entity\TargetingFallingItem;
+use kim\present\showysowing\event\UseBatchFarmingEvent;
 use pocketmine\block\Crops;
 use pocketmine\entity\Location;
 use pocketmine\event\Listener;
@@ -50,12 +51,17 @@ final class Loader extends PluginBase implements Listener{
         $world = $player->getWorld();
         $pos = $event->getBlock()->getPos()->add(0.5, 1, 0.5);
 
+        $ev = new UseBatchFarmingEvent($player, $item, $this->maxStep, $this->risePerStep, $this->clockwise);
+        $ev->call();
+        if($ev->isCancelled())
+            return;
+
         $baseDirection = $player->getHorizontalFacing();
         $direction = $baseDirection;
         $add = new Vector3(0, 0, 0);
         $range = 1;
-        for($step = 0; $step < $this->maxStep && !$item->isNull(); ++$step, $item->pop()){
-            $location = Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world);
+        for($step = 0; $step < $ev->getMaxStep() && !$item->isNull(); ++$step, $item->pop()){
+            $location = Location::fromObject($pos->add($add->x, $step * $ev->getRisePerStep(), $add->z), $world);
             if($item instanceof Fertilizer){
                 $entity = new TargetingFallingItem($location, $player, $item, (int) $pos->y);
             }elseif($block instanceof Crops){
@@ -69,7 +75,7 @@ final class Loader extends PluginBase implements Listener{
             if(abs($next->x) <= $range && abs($next->z) <= $range){
                 $add = $next;
             }else{
-                $direction = Facing::rotateY($direction, $this->clockwise);
+                $direction = Facing::rotateY($direction, $ev->isClockwise());
                 if($direction === $baseDirection){
                     $range++;
                 }
