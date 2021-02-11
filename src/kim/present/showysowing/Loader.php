@@ -76,7 +76,9 @@ final class Loader extends PluginBase implements Listener{
                 $add = $add->getSide($direction);
             }
         }
-        $player->getInventory()->setItemInHand($item);
+        if($player->hasFiniteResources()){
+            $player->getInventory()->setItemInHand($item);
+        }
     }
 
     private function getConfigFloat(string $k, float $default) : float{

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace kim\present\showysowing\entity;
 
 use pocketmine\entity\object\ItemEntity;
+use pocketmine\event\inventory\InventoryPickupItemEvent;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\player\Player;
 
@@ -35,5 +36,32 @@ final class ReturnItemEntity extends ItemEntity{
     /** @override for save with chunk like default item entity */
     public function saveNBT() : CompoundTag{
         return (new ItemEntity($this->location, $this->item))->saveNBT();
+    }
+
+    /** @override for prevent pickup when player has infinite resources (ex, creative-mode) */
+    public function onCollideWithPlayer(Player $player) : void{
+        if($this->getPickupDelay() !== 0){
+            return;
+        }
+
+        if($player->hasFiniteResources()){
+            $item = $this->getItem();
+            $playerInventory = $player->getInventory();
+
+            if(!$playerInventory->canAddItem($item))
+                return;
+
+            $ev = new InventoryPickupItemEvent($playerInventory, $this);
+            $ev->call();
+            if($ev->isCancelled())
+                return;
+
+            $playerInventory->addItem(clone $item);
+        }
+
+        foreach($this->getViewers() as $viewer){
+            $viewer->getNetworkSession()->onPlayerPickUpItem($player, $this);
+        }
+        $this->flagForDespawn();
     }
 }

@@ -87,7 +87,7 @@ abstract class TargetingFallingEntity extends Entity{
 
         $item = $event->getItem();
         $inv = $this->owningPlayer->getInventory();
-        if(!$event->isCancelled() || !empty($inv->addItem($item))){
+        if(!$event->isCancelled() || !$this->owningPlayer->hasFiniteResources() || !empty($inv->addItem($item))){
             $itemEntity = new ReturnItemEntity(Location::fromObject($this->location, $this->getWorld()), $item);
             $itemEntity->setOwningEntity($this->owningPlayer);
             $itemEntity->setPickupDelay(10);
