@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace kim\present\showysowing;
 
-use kim\present\showysowing\entity\SowFallingBlock;
+use kim\present\showysowing\entity\TargetingFallingBlock;
 use pocketmine\block\Crops;
 use pocketmine\entity\Location;
 use pocketmine\event\Listener;
@@ -41,7 +41,7 @@ final class Loader extends PluginBase implements Listener{
             return;
 
         $player = $event->getPlayer();
-        if(!$player->isSneaking() || SowFallingBlock::getCount($player) > 0)
+        if(!$player->isSneaking() || TargetingFallingBlock::getCount($player) > 0)
             return;
 
         $event->cancel();
@@ -53,7 +53,7 @@ final class Loader extends PluginBase implements Listener{
         $add = new Vector3(0, 0, 0);
         $range = 1;
         for($step = 0; $step < $this->maxStep && !$item->isNull(); ++$step, $item->pop()){
-            $entity = new SowFallingBlock(Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world), $player, clone $block, (int) $pos->y);
+            $entity = new TargetingFallingBlock(Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world), $player, clone $block, (int) $pos->y);
             $entity->spawnToAll();
 
             $next = $add->getSide($direction);

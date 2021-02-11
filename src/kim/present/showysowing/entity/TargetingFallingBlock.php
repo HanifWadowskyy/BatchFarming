@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace kim\present\showysowing\entity;
 
+use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\Crops;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\entity\Location;
@@ -29,7 +29,7 @@ use pocketmine\world\World;
  * Re-written for call events (block place or item drop) via owner player.
  * When it drop an item, drop ReturnItemEntity instead ItemEntity.
  */
-final class SowFallingBlock extends Entity{
+final class TargetingFallingBlock extends Entity{
     /**
      * Counts of entities summoned by the each player
      * It is used to disable continuous use when a function is already in use.
@@ -42,11 +42,11 @@ final class SowFallingBlock extends Entity{
         return self::$counts[spl_object_hash($player)] ?? 0;
     }
 
-    private Crops $block;
+    private Block $block;
     private Player $owningPlayer;
     private int $targetY;
 
-    public function __construct(Location $location, Player $owningPlayer, Crops $block, int $targetY, ?CompoundTag $nbt = null){
+    public function __construct(Location $location, Player $owningPlayer, Block $block, int $targetY, ?CompoundTag $nbt = null){
         parent::__construct($location, $nbt);
         $this->gravity = 0.04;
         $this->drag = 0.02;
@@ -147,18 +147,18 @@ final class SowFallingBlock extends Entity{
         $properties->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getFullId()));
     }
 
-    /** Returns crops block */
-    public function getBlock() : Crops{
+    /** Returns cloned block */
+    public function getBlock() : Block{
         return clone $this->block;
     }
 
-    /** Returns crops picked item */
+    /** Returns picked item of block */
     public function getItem() : Item{
         return $this->block->getPickedItem();
     }
 
     /**
-     * Place crops block at given vector
+     * Place block at given vector
      * It works like World::useItemOn(), but excludes PlayerInteractEvent
      *
      * @see World::useItemOn()
