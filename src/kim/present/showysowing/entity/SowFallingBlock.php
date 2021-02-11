@@ -27,7 +27,7 @@ use pocketmine\world\World;
 /**
  * An entity that functions like an falling block.
  * Re-written for call events (block place or item drop) via owner player.
- * When it drop an item, drop SowItemEntity instead ItemEntity.
+ * When it drop an item, drop ReturnItemEntity instead ItemEntity.
  */
 final class SowFallingBlock extends Entity{
     /**
@@ -96,7 +96,7 @@ final class SowFallingBlock extends Entity{
         $item = $event->getItem();
         $inv = $this->owningPlayer->getInventory();
         if(!$event->isCancelled() || !empty($inv->addItem($item))){
-            $itemEntity = new SowItemEntity(Location::fromObject($this->location, $this->getWorld()), $item);
+            $itemEntity = new ReturnItemEntity(Location::fromObject($this->location, $this->getWorld()), $item);
             $itemEntity->setOwningEntity($this->owningPlayer);
             $itemEntity->setPickupDelay(10);
             $itemEntity->setMotion($motion ?? new Vector3(lcg_value() * 0.2 - 0.1, 0.2, lcg_value() * 0.2 - 0.1));

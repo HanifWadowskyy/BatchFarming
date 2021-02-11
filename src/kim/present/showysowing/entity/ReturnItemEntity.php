@@ -12,7 +12,7 @@ use pocketmine\player\Player;
  * Re-written for return immediately to the owner player.
  * When save into chunk, it is saved as an ItemEntity.
  */
-final class SowItemEntity extends ItemEntity{
+final class ReturnItemEntity extends ItemEntity{
     /** @override for auto pickup to owning player */
     protected function entityBaseTick(int $tickDiff = 1) : bool{
         if($this->closed){
