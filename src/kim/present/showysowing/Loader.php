@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace kim\present\showysowing;
 
 use kim\present\showysowing\entity\TargetingFallingBlock;
+use kim\present\showysowing\entity\TargetingFallingItem;
 use pocketmine\block\Crops;
 use pocketmine\entity\Location;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\item\Fertilizer;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\plugin\PluginBase;
@@ -35,13 +37,13 @@ final class Loader extends PluginBase implements Listener{
         if($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK)
             return;
 
-        $item = $event->getItem();
-        $block = $item->getBlock();
-        if(!$block instanceof Crops)
-            return;
-
         $player = $event->getPlayer();
         if(!$player->isSneaking() || TargetingFallingBlock::getCount($player) > 0)
+            return;
+
+        $item = $event->getItem();
+        $block = $item->getBlock();
+        if(!$item instanceof Fertilizer && !$block instanceof Crops)
             return;
 
         $event->cancel();
@@ -53,7 +55,14 @@ final class Loader extends PluginBase implements Listener{
         $add = new Vector3(0, 0, 0);
         $range = 1;
         for($step = 0; $step < $this->maxStep && !$item->isNull(); ++$step, $item->pop()){
-            $entity = new TargetingFallingBlock(Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world), $player, clone $block, (int) $pos->y);
+            $location = Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world);
+            if($item instanceof Fertilizer){
+                $entity = new TargetingFallingItem($location, $player, $item, (int) $pos->y);
+            }elseif($block instanceof Crops){
+                $entity = new TargetingFallingBlock($location, $player, $block, (int) $pos->y);
+            }else{
+                return;
+            }
             $entity->spawnToAll();
 
             $next = $add->getSide($direction);
