@@ -163,7 +163,7 @@ final class SowFallingBlock extends Entity{
      *
      * @see World::useItemOn()
      */
-    private function place(World $world, Vector3 $vector) : bool{
+    protected function place(World $world, Vector3 $vector) : bool{
         $blockClicked = $world->getBlock($vector);
         if($blockClicked->getId() === BlockLegacyIds::AIR)
             return false;
