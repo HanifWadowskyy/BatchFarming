@@ -30,6 +30,18 @@ use pocketmine\world\World;
  * When it drop an item, drop SowItemEntity instead ItemEntity.
  */
 final class SowFallingBlock extends Entity{
+    /**
+     * Counts of entities summoned by the each player
+     * It is used to disable continuous use when a function is already in use.
+     *
+     * @var int[] string $playerHash => int $count
+     */
+    private static array $counts = [];
+
+    public static function getCount(Player $player) : int{
+        return self::$counts[spl_object_hash($player)] ?? 0;
+    }
+
     private Crops $block;
     private Player $owningPlayer;
     private int $targetY;
@@ -42,6 +54,11 @@ final class SowFallingBlock extends Entity{
         $this->owningPlayer = $owningPlayer;
         $this->block = $block;
         $this->targetY = $targetY;
+
+        if(!isset(self::$counts[$hash = spl_object_hash($owningPlayer)])){
+            self::$counts[$hash] = 0;
+        }
+        self::$counts[$hash]++;
     }
 
     /** @override for working like falling block */
@@ -85,6 +102,15 @@ final class SowFallingBlock extends Entity{
             $itemEntity->setMotion($motion ?? new Vector3(lcg_value() * 0.2 - 0.1, 0.2, lcg_value() * 0.2 - 0.1));
             $itemEntity->spawnToAll();
         }
+    }
+
+    /** @override for reduce summon count */
+    protected function onDispose() : void{
+        self::$counts[$hash = spl_object_hash($this->owningPlayer)]--;
+        if(self::$counts[$hash] <= 0){
+            unset(self::$counts[$hash]);
+        }
+        parent::onDispose();
     }
 
     /** @override for prevent damage */

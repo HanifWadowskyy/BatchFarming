@@ -41,7 +41,7 @@ final class Loader extends PluginBase implements Listener{
             return;
 
         $player = $event->getPlayer();
-        if(!$player->isSneaking())
+        if(!$player->isSneaking() || SowFallingBlock::getCount($player) > 0)
             return;
 
         $event->cancel();
