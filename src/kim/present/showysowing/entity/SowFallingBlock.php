@@ -32,14 +32,16 @@ use pocketmine\world\World;
 final class SowFallingBlock extends Entity{
     private Crops $block;
     private Player $owningPlayer;
+    private int $targetY;
 
-    public function __construct(Location $location, Player $owningPlayer, Crops $block, ?CompoundTag $nbt = null){
+    public function __construct(Location $location, Player $owningPlayer, Crops $block, int $targetY, ?CompoundTag $nbt = null){
         parent::__construct($location, $nbt);
         $this->gravity = 0.04;
         $this->drag = 0.02;
 
         $this->owningPlayer = $owningPlayer;
         $this->block = $block;
+        $this->targetY = $targetY;
     }
 
     /** @override for working like falling block */
@@ -61,6 +63,12 @@ final class SowFallingBlock extends Entity{
         }
 
         return $hasUpdate;
+    }
+
+    /** @override for pass when more than 2 spaces higher than the target y */
+    protected function move(float $dx, float $dy, float $dz) : void{
+        $this->keepMovement = $this->location->y - $this->targetY > 2;
+        parent::move($dx, $dy, $dz);
     }
 
     /** @override for drop item */

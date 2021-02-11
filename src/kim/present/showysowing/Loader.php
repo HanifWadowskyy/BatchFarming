@@ -53,7 +53,7 @@ final class Loader extends PluginBase implements Listener{
         $add = new Vector3(0, 0, 0);
         $range = 1;
         for($step = 0; $step < $this->maxStep && !$item->isNull(); ++$step, $item->pop()){
-            $entity = new SowFallingBlock(Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world), $player, clone $block);
+            $entity = new SowFallingBlock(Location::fromObject($pos->add($add->x, $step * $this->risePerStep, $add->z), $world), $player, clone $block, (int) $pos->y);
             $entity->spawnToAll();
 
             $next = $add->getSide($direction);
