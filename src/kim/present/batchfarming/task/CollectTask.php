@@ -44,18 +44,14 @@ use function lcg_value;
 use function spl_object_hash;
 
 final class CollectTask extends Task{
-    private Player $owningPlayer;
-    private World $world;
-    private SeedObject $seed;
-
     /** @var Player[] */
     private array $hasSpawned = [];
 
-    public function __construct(Player $owningPlayer, World $world, SeedObject $seed){
-        $this->owningPlayer = $owningPlayer;
-        $this->world = $world;
-        $this->seed = $seed;
-
+    public function __construct(
+        private Player $owningPlayer,
+        private World $world,
+        private SeedObject $seed
+    ){
         $pk = new AddItemActorPacket();
         $pk->entityRuntimeId = $this->seed->entityRuntimeId;
         $pk->item = TypeConverter::getInstance()->coreItemStackToNet($this->seed->block->getPickedItem());
@@ -64,8 +60,9 @@ final class CollectTask extends Task{
         $chunkX = $seed->getFloorX() >> 4;
         $chunkZ = $seed->getFloorZ() >> 4;
         foreach($this->world->getChunkPlayers($chunkX, $chunkZ) as $player){
-            if(!$player->hasReceivedChunk($chunkX, $chunkZ))
+            if(!$player->hasReceivedChunk($chunkX, $chunkZ)){
                 continue;
+            }
 
             $this->hasSpawned[spl_object_hash($player)] = $player;
             $player->getNetworkSession()->sendDataPacket($pk);
@@ -73,9 +70,7 @@ final class CollectTask extends Task{
     }
 
     public function onRun() : void{
-        if($this->seed->giveItemOnCollect){
-            $this->seed->collect($this->world, $this->owningPlayer);
-        }
+        $this->seed->collect($this->world, $this->owningPlayer);
 
         Server::getInstance()->broadcastPackets($this->hasSpawned, [
             TakeItemActorPacket::create($this->owningPlayer->getId(), $this->seed->entityRuntimeId),

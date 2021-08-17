@@ -38,19 +38,14 @@ use pocketmine\player\Player;
 final class BatchFarmingStartEvent extends Event implements Cancellable{
     use CancellableTrait;
 
-    private Player $player;
-    private Item $item;
+    public function __construct(
+        private Player $player, // TODO: Set to `public readonly` in PHP 8.1
+        private Item $item,     // TODO: Set to `public readonly` in PHP 8.1
 
-    private int $maxStep;
-    private float $risePerStep;
-    private bool $clockwise;
-
-    public function __construct(Player $player, Item $item, int $maxStep, float $risePerStep, bool $clockwise){
-        $this->player = $player;
-        $this->item = $item;
-        $this->maxStep = $maxStep;
-        $this->risePerStep = $risePerStep;
-        $this->clockwise = $clockwise;
+        public int $maxStep,
+        public float $risePerStep,
+        public bool $clockwise
+    ){
     }
 
     public function getPlayer() : Player{
@@ -59,29 +54,5 @@ final class BatchFarmingStartEvent extends Event implements Cancellable{
 
     public function getItem() : Item{
         return $this->item;
-    }
-
-    public function getMaxStep() : int{
-        return $this->maxStep;
-    }
-
-    public function setMaxStep(int $maxStep) : void{
-        $this->maxStep = $maxStep;
-    }
-
-    public function getRisePerStep() : float{
-        return $this->risePerStep;
-    }
-
-    public function setRisePerStep(float $risePerStep) : void{
-        $this->risePerStep = $risePerStep;
-    }
-
-    public function isClockwise() : bool{
-        return $this->clockwise;
-    }
-
-    public function setClockwise(bool $clockwise) : void{
-        $this->clockwise = $clockwise;
     }
 }

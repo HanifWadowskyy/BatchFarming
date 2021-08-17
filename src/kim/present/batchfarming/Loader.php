@@ -57,6 +57,7 @@ final class Loader extends PluginBase implements Listener{
         $this->maxStep = (int) $this->getConfigFloat("max-step", 9);
         $this->risePerStep = $this->getConfigFloat("rise-per-step", 0.4);
         $this->clockwise = $this->getConfigBool("clockwise", true);
+
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
@@ -68,17 +69,20 @@ final class Loader extends PluginBase implements Listener{
      * The number of steps, direction of rotation, and amount of rising are read from config.yml.
      */
     public function onPlayerInteract(PlayerInteractEvent $event) : void{
-        if($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK)
+        if($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK){
             return;
+        }
 
         $player = $event->getPlayer();
-        if(!$player->isSneaking() || SeedingTask::getCount($player) >= $this->maxCount)
+        if(!$player->isSneaking() || SeedingTask::getCount($player) >= $this->maxCount){
             return;
+        }
 
         $item = $event->getItem();
         $block = $item->getBlock();
-        if(!$block instanceof Crops)
+        if(!$block instanceof Crops){
             return;
+        }
 
         $event->cancel();
         $world = $player->getWorld();
@@ -86,8 +90,9 @@ final class Loader extends PluginBase implements Listener{
 
         $ev = new BatchFarmingStartEvent($player, $item, $this->maxStep, $this->risePerStep, $this->clockwise);
         $ev->call();
-        if($ev->isCancelled())
+        if($ev->isCancelled()){
             return;
+        }
 
         $baseDirection = $player->getHorizontalFacing();
         $direction = $baseDirection;
@@ -95,7 +100,7 @@ final class Loader extends PluginBase implements Listener{
         $range = 1;
         $hasFiniteResources = $player->hasFiniteResources();
         $seeds = [];
-        for($step = 0; $step < $ev->getMaxStep(); ++$step){
+        for($step = 0; $step < $ev->maxStep; ++$step){
             if($hasFiniteResources){
                 if($item->isNull()){
                     break;
@@ -103,13 +108,14 @@ final class Loader extends PluginBase implements Listener{
                     $item->pop();
                 }
             }
-            $seeds[] = new SeedObject($pos->add($add->x, $step * $ev->getRisePerStep(), $add->z), $block, $hasFiniteResources);
+
+            $seeds[] = new SeedObject($pos->add($add->x, $step * $ev->risePerStep, $add->z), $block, $hasFiniteResources);
 
             $next = $add->getSide($direction);
             if(abs($next->x) <= $range && abs($next->z) <= $range){
                 $add = $next;
             }else{
-                $direction = Facing::rotateY($direction, $ev->isClockwise());
+                $direction = Facing::rotateY($direction, $ev->clockwise);
                 if($direction === $baseDirection){
                     $range++;
                 }
@@ -127,17 +133,9 @@ final class Loader extends PluginBase implements Listener{
     private function getConfigBool(string $k, bool $default) : bool{
         $value = $this->getConfig()->get($k, $default);
 
-        if(is_bool($value))
-            return $value;
-
-        switch(strtolower($value)){
-            case "on":
-            case "true":
-            case "1":
-            case "yes":
-                return true;
-        }
-
-        return false;
+        return is_bool($value) ? $value : match (strtolower($value)) {
+            "on", "true", "1", "yes" => true,
+            default => false
+        };
     }
 }

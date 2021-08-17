@@ -38,6 +38,7 @@ use pocketmine\scheduler\Task;
 use pocketmine\Server;
 use pocketmine\world\World;
 
+use function array_map;
 use function spl_object_hash;
 
 final class SeedingTask extends Task{
@@ -55,35 +56,31 @@ final class SeedingTask extends Task{
         return self::$counts[spl_object_hash($player)] ?? 0;
     }
 
-    private Player $owningPlayer;
-    private int $targetY;
-    private World $world;
-    /** @var SeedObject[] */
-    private array $seeds = [];
-
     /** @var Player[] */
     private array $hasSpawned = [];
 
     /** @param SeedObject[] $seeds */
-    public function __construct(PluginBase $owningPlugin, Player $owningPlayer, int $targetY, World $world, array $seeds){
+    public function __construct(
+        PluginBase $owningPlugin,
+        private Player $owningPlayer,
+        private int $targetY,
+        private World $world,
+        private array $seeds
+    ){
         $this->owningPlugin = $owningPlugin;
-        $this->owningPlayer = $owningPlayer;
-        $this->targetY = $targetY;
-        $this->world = $world;
         foreach($seeds as $seed){
             $this->seeds[spl_object_hash($seed)] = $seed;
         }
 
-        if(!isset(self::$counts[$hash = spl_object_hash($owningPlayer)])){
-            self::$counts[$hash] = 0;
-        }
+        self::$counts[$hash = spl_object_hash($owningPlayer)] ??= 0;
         self::$counts[$hash]++;
 
         $chunkX = $owningPlayer->getPosition()->getFloorX() >> 4;
         $chunkZ = $owningPlayer->getPosition()->getFloorZ() >> 4;
         foreach($this->world->getChunkPlayers($chunkX, $chunkZ) as $player){
-            if(!$player->hasReceivedChunk($chunkX, $chunkZ))
+            if(!$player->hasReceivedChunk($chunkX, $chunkZ)){
                 continue;
+            }
 
             $this->hasSpawned[spl_object_hash($player)] = $player;
         }
@@ -145,13 +142,8 @@ final class SeedingTask extends Task{
     }
 
     private function broadcastEntityMove() : void{
-        $packets = [];
-        foreach($this->seeds as $seed){
-            $packets[] = $seed->getMovementPacket();
-        }
-
-        if(!empty($packets)){
-            Server::getInstance()->broadcastPackets($this->hasSpawned, $packets);
+        if(!empty($this->seeds)){
+            Server::getInstance()->broadcastPackets($this->hasSpawned, array_map(fn($seed) => $seed->getMovementPacket(), $this->seeds));
         }
     }
 
